@@ -3,7 +3,6 @@ using PracticoDos.Models;
 using PracticoDos.Services;
 using System.Text.Json;
 
-
 namespace PracticoDos.Controllers
 {
     [Route("patients")]
@@ -11,10 +10,12 @@ namespace PracticoDos.Controllers
     public class PatientsController : ControllerBase
     {
         private readonly PatientService _service;
+        private readonly ILogger<PatientsController> _logger;
 
-        public PatientsController()
+        public PatientsController(ILogger<PatientsController> logger)
         {
             _service = new PatientService();
+            _logger = logger;
         }
 
         // Create
@@ -111,8 +112,10 @@ namespace PracticoDos.Controllers
         public async Task<ActionResult<PatientWithGifts>> GetPatientWithGifts(string ci)
         {
             var patient = _service.GetPatientByCI(ci);
-            if (patient == null)
+            if (patient == null) {
+                _logger.LogWarning("Patient with CI {CI} not found when retrieving gifts", ci);
                 return NotFound("Patient not found");
+            }
 
             using var client = new HttpClient();
 
@@ -127,6 +130,9 @@ namespace PracticoDos.Controllers
                     PropertyNameCaseInsensitive = true
                 });
 
+                _logger.LogInformation("Successfully retrieved {Count} gifts for patient {CI}", gifts?.Count ?? 0, ci);
+
+
                 var result = new PatientWithGifts
                 {
                     Name = patient.Name,
@@ -140,6 +146,7 @@ namespace PracticoDos.Controllers
             }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "Error retrieving gifts for patient with CI: {CI}", ci);
                 return StatusCode(500, $"Error retrieving gifts: {ex.Message}");
             }
         }

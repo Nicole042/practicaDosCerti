@@ -4,7 +4,7 @@ namespace PracticoDos.Services
 {
     public class PatientService
     {
-        private readonly string _filePath = "patients.txt";
+        private readonly string _filePath = Path.Combine("Data", "patients.txt");
 
         // Create
         public Patient AddPatient(Patient patient)

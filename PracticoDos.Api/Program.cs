@@ -15,7 +15,6 @@ Log.Logger = new LoggerConfiguration()
 
 builder.Services.AddControllers();
 builder.Services.AddSwaggerGen();
-builder.Services.AddEndpointsApiExplorer();
 
 
 var app = builder.Build();
@@ -28,5 +27,4 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapControllers();
-
 app.Run();

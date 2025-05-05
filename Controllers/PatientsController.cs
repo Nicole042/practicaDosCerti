@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
 using PracticoDos.Models;
 using PracticoDos.Services;
+using System.Text.Json;
+
 
 namespace PracticoDos.Controllers
 {
@@ -103,5 +105,44 @@ namespace PracticoDos.Controllers
 
             return Ok("Patient deleted");
         }
+
+        [HttpGet]
+        [Route("{ci}/gifts")]
+        public async Task<ActionResult<PatientWithGifts>> GetPatientWithGifts(string ci)
+        {
+            var patient = _service.GetPatientByCI(ci);
+            if (patient == null)
+                return NotFound("Patient not found");
+
+            using var client = new HttpClient();
+
+            try
+            {
+                var response = await client.GetAsync("https://api.restful-api.dev/objects");
+                response.EnsureSuccessStatusCode();
+
+                var json = await response.Content.ReadAsStringAsync();
+                var gifts = JsonSerializer.Deserialize<List<Gift>>(json, new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                });
+
+                var result = new PatientWithGifts
+                {
+                    Name = patient.Name,
+                    LastName = patient.LastName,
+                    CI = patient.CI,
+                    BloodType = patient.BloodType?? string.Empty,
+                    Gifts = gifts ?? new List<Gift>()
+                };
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error retrieving gifts: {ex.Message}");
+            }
+        }
+
     }
 }
